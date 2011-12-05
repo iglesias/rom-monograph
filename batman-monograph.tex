@@ -1,1 +1,218 @@
-/home/nando/Documents/Dropbox/rom/alternativo/test.tex
+\documentclass[a4paper]{article}
+
+\usepackage{graphicx}           % For including graphics.
+\usepackage{hyperref}           % To use some cool links within the report.
+
+\addtolength{\topmargin}{-20mm}% Margin adjustments.
+\addtolength{\textheight}{20mm}% Margin adjustments.
+
+\begin{document}
+
+\newcommand{\batman}{B.A.T.M.A.N.}
+
+\title{Mobile Computers Networks \\
+Monograph on \batman}
+\author{Fernando J. Iglesias Garc\'{i}a \\ fjig@kth.se}
+
+\maketitle
+
+% TODO Index
+
+% TODO Get rid of the numbers here
+\section{Motivation}
+
+First of all, some of the reasons why the Better Approach To Mobile
+Ad-hoc Networking (\batman) routing protocol is interesting to study are
+presented. The focus is mainly on presenting the protocol as an alternative
+to the Optimized Link State Routing (OLSR) protcol rather than to motivate
+the usefulness of mobile Ad-hoc networks. \\
+
+\vspace{2mm}
+OLSR, as any other link-state routing protocol, relies on the fact that the
+nodes share roughly the same graph of the network. The more this information
+differs among nodes, the more likely it is that \emph{bad things}
+happen while the nodes build their routing tables. This observation becomes an
+important issue in mobile or lossy networks where the complexity of maintaining
+synchronized the information of the network between nodes increases
+exponentially with the number of nodes. Consequently, it may be reasonable to
+address the routing problem from a different perspective to link-state
+algorithms. Moreover, the actual OLSR daemon comes with a bunch of extensions
+that, at least in the opinion of \batman's development group, try to separate
+precisely the protocol from a traditional link-state protocol's 
+design~\cite{whyBatman}. \\
+
+\vspace{2mm}
+In addition to this and related to the last part discussed in the paragraph
+above, there is no fully working implementation of OLSR as specified in RFC 3626
+for real scenarios~\cite{whyBatman}. Nevertheless, the implementation of \batman
+is not completely consistent with its specification
+either~\cite{mailBatmanComments} but it must be taken into account that in this
+case the specification is basically a draft~\cite{batmanRFC} and is expected 
+to evelop meanwhile the protocol is developed.
+
+\section{Philosophy of the Protocol}
+
+To start with the description of the routing protocol, it is required first to
+classify it as distance-vector routing protocol or, on the contrary, as
+link-state routing protocol~\cite{applet-DVvsLS}. \batman is better found within
+the first group, distance-vector routing protocol, since the knowledge of the
+network is not found in each and every one of the nodes completely but
+distributed. Every node is just concerned about which is the best neighbour
+towards each of the other non-neighbour nodes of the
+network~\cite{pdf-batman-status}. \\
+
+\vspace{2mm}
+A somewhat distinguishing feature of the flooding mechanism described
+below~\ref{sec:protocol-description} is that it is timeless.
+In other words, there are no timeouts for the topology information of the
+network. Apart from that, the algorithm is proactive, the nodes look for routes
+actively and they do not wait until they are required, versus reactive. Another
+example of proactive protocol is OLSR, Ad-hoc On-demand Distance Vector (AODV)
+is an example of a reactive protocol for mobile Ad-hoc networks.
+
+\section{Description of the Protocol}
+\label{sec:protocol-description}
+
+The \batman protocol algorithm is briefly described here. In common with the
+operation of other routing protocols, \batman nodes start their operation with
+the transmission of broadcast messages. In \batman's particular frame, these
+are known as originator messages, namely OGMs. The neighbours of the node
+continue transmitting in broadcast the OGMs attending to some rules that are
+described below. Rapidly, the network gets full of OGMs. It stems from this
+flooding the requirement for the format of OGM messages to be small enough so
+the protocol can be as small and fast as possible~\cite{batmanProtocol}.  \\
+
+\vspace{2mm}
+One node can re-broadcast OGMs either zero or one time, the messages are
+uniquely identified using the \emph{Originator Address} and \emph{Sequence
+Number}~\footnote{ Each node is reponsible for generating OGMs with different
+sequence numbers. According to the RFC draft, this is achieved incrementing by
+one consecutively the sequence number} fields~\cite{batmanRFC}. The other 
+requirement for each OGM to be re-broadcast is that the message must have been 
+received from the neighbour which is identified as the best next step towards 
+the originator of the OGM~\cite{batmanProtocol}. \\
+
+\vspace{2mm}
+\batman nodes make use of a bit of intelligence in order to choose which is the
+best neighbour in case that there exists more than one neighbour. Looking at the
+statistics of the received OGMs, in particular to the time it took to receive
+the messages from each of the neighbours and how reliable they were received,
+the nodes make the decision of saving one or another neighbour in their routing
+table as the best next hop~\cite{batmanProtocol}. \\
+
+\vspace{2mm}
+The first version of the protocol made the big assumption that all the links
+where bidirectional, i.e. if then node A receives a OGM from B, then A
+considered directly that B was accesible. In some kind of networks, radio over
+all, it is not strange to find that communication is only possible in one way.
+The second version of the protocol stopped with this consideration introducing
+the so-called \emph{Bidirectional Link Check}~\cite{batmanWikipedia}. This 
+check is basically  another step in the flooding mechanism and it is implemented 
+using information of the Sequence numbers of past and self-originated OGMs and 
+another flag of the OGM which has not been introduced in this 
+monograph~\cite{batmanRFC}.  \\
+
+\vspace{2mm}
+In addition to Originator Messages (OGMs) there is another type of messages
+called Host Network Announcement (HNA). The HNAs are optional and provide
+extensions in the semantics of the inmediately before preceding OGMs. They are
+used to announce a gateway to a network or host. For example, if there is a
+\batman mobile Ad-hoc network in which one node has external access to internet
+in another interface, this node could work as a gateway to the outer internet 
+for all the other nodes in the mobile network~\cite{batmanRFC}.  \\
+
+\section{The Visualization Server}
+
+The vis server~\cite{visServer} is a very useful and interesting graphical tool 
+to use in order to gain insight of the operation of the protocol and to debug in
+development. A method for visualizing the state of the network is especially 
+appealing for routing protocols such as \batman where each node gathers 
+information about the best next hop. In other words, when no node has a full
+picture of how the network looks like~\footnote{ Note that although it is useful
+for us to picture and think of the graph of the network as a whole and not as 
+something distributed, the latter is the most interesting implementation owing
+to the less amount of data in the communication and stability, among other
+reasons}. The vis servers can be connected to other tools for mesh visualization to 
+generate fancy three dimensional graphics, Figure~\ref{fig:vis-server}.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{pictures/08-vis_zoomed.eps}
+  \caption{Graphic representation of a network generated using the vis server
+    together with s3d tools.}
+    % TODO reference the image
+  \label{fig:vis-server}
+\end{figure}
+
+% TODO Format output by the visualization server
+
+\section{\batman  advanced}
+
+The original implementation of \batman, the so-called batman daemon, together
+with most of the wireless routing protocols is built on layer 3 (transport
+layer). This means that the protocol makes use of the User Datagram Protocol 
+(UDP) to exchange datagrams and the routing algorithm is deployed on it. 
+\batman advanced, commonly known as batman-adv, is an alternative implementation 
+of the protocol built on layer 2 (link layer)~\cite{batman-adv}.  \\
+
+\vspace{2mm}
+The module batman-adv is included in the Linux kernel from the version
+2.6.38~\cite{batman-adv-kernel}. The module had to be developed as a kernel
+driver because it is not possible to neither to route nor to forward ethernet
+packages. \\
+
+\vspace{2mm}
+One interesting point of batman-adv is that it turns out to be very light
+loaded, it fully operates on the link layer using raw ethernet packages to
+transport the routing information. On the contrary to UDP, batman-adv can be
+thought of a transport protocol based on virtual networks. This approximation
+offers interesting properties for mobile networks such as unawareness of the
+topology of the network and robustness against network network changes. \\
+
+\vspace{2mm}
+Currently, only the branch of the project that works on layer 2 remains active
+and the initial one, batman daemon, is regarded as unmaintained.
+
+\begin{thebibliography}{99}
+
+  % TODO Author in the RFC references, order references
+
+  \bibitem{pdf-batman-status} Neumann, C., "Elektra" Aichele, C., Lindner, M.
+  June 28, 2007. \emph{\batman Status Report}. 
+
+  \bibitem{applet-DVvsLS} \emph{A Java applet implementing the Distance Vector
+  and the Link-State algorithms for pedagogical purposes.} Retrieved on December
+  5, 2011.
+
+  \bibitem{whyBatman} Why starting \batman? Retrieved on December 4, 2011
+  from http://www.open-mesh.org/wiki/batmand/Why-starting-batman. 
+
+  \bibitem{olsrRFC} RFC 3626 \emph{Optimized Link State Routing Protocol (OLSR)}.
+  http://www.ietf.org/rfc/rfc3626.txt.
+
+  \bibitem{mailBatmanComments} J. Chroboczek. \emph{A few comments on the BATMAN
+  routing protocol}.  Retrieved on December 4, 2011 from
+  http://lists.alioth.debian.org/pipermail/babel-users/2008-August/000151.html.
+
+  \bibitem{batmanRFC} RFC Draft \emph{Better Approach To Mobile Ad-hoc
+  Networking (\batman)}.
+  http://tools.ietf.org/html/draft-wunderlich-openmesh-manet-routing-00
+
+  \bibitem{batmanProtocol} \emph{\batman protocol concept}. Retrieved on
+  December 4, 2011 from http://www.open-mesh.org/wiki/open-mesh/BATMANConcept.
+
+  \bibitem{visServer} \emph{Visualize the mesh}. Retrieved on December 5, 2011
+  from http://www.open-mesh.org/wiki/batmand/VisualizeMesh.
+
+  \bibitem{batman-adv} \emph{\batman advanced}. Retrieved on December 5, 2011
+  from http://www.open-mesh.org/wiki/batman-adv/Wiki.
+
+  \bibitem{batman-adv-kernel} \emph{Linux 2.6.38}. Retrieved on December 5,
+  2011 from
+  http://kernelnewbies.org/Linux\_2\_6\_38\#head-17577655766f585c3c47df886fe91dba276f4c3f.
+
+  \bibitem{batmanWikipedia} \emph{Wipedia on \batman}. Retrieved on December 5,
+  2011 from http://en.wikipedia.org/wiki/B.A.T.M.A.N.
+
+\end{thebibliography}
+\end{document}
